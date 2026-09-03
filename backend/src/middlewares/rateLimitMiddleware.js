@@ -12,7 +12,7 @@ const authLimiter = rateLimit({
 // rate limiter for API calls, standard
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 2,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests, please try again later.' }
