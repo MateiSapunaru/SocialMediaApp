@@ -128,7 +128,7 @@ The backend includes full Postman-tested endpoints for:
 | `POST` | `/posts` | Create a post (requires token) |
 | `POST` | `/posts/:id/like` | Toggle like (requires token) |
 | `POST` | `/posts/:id/comments` | Add a comment (requires token) |
-| `GET`  | `/auth/users` | Get all users (ADMIN only) |
+| `GET`  | `/auth/users` | Get all users (requires ADMIN role) |
 
 All responses are JSON-formatted and include proper HTTP status codes.
 
@@ -158,6 +158,12 @@ npm install
 
 ### 3. Configure `.env`
 
+Copy the example file and fill in your own values (this file is gitignored, so your real credentials never get committed):
+
+```bash
+cp .env.example .env
+```
+
 ```env
 PORT=3000
 DB_HOST=localhost
@@ -186,6 +192,17 @@ npm run dev
 ```bash
 cd ../frontend
 npx serve .
+```
+
+---
+
+## ✅ Running Tests
+
+The backend has a Jest unit test suite covering the auth/post service logic (registration, login, ownership and admin rules, like toggling) and JWT signing, all run against mocked repositories — no database needed:
+
+```bash
+cd backend
+npm test
 ```
 
 ---
