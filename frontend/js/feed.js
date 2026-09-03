@@ -10,6 +10,13 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function formatError(err) {
+  if (Array.isArray(err.errors) && err.errors.length) {
+    return err.errors.map((e) => e.message).join(", ");
+  }
+  return err.message;
+}
+
 // Load feed
 async function loadFeed() {
   feedContainer.innerHTML = "Loading...";
@@ -138,7 +145,7 @@ newPostForm.addEventListener("submit", async (e) => {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    alert("Failed to create post: " + (err.message || res.status));
+    alert("Failed to create post: " + (formatError(err) || res.status));
     return;
   }
 

@@ -1,6 +1,13 @@
 import { apiRequest, setAuthTokens, clearAuth } from "./api.js";
 import { loadFeed } from "./feed.js";
 
+function formatError(err) {
+  if (Array.isArray(err.errors) && err.errors.length) {
+    return err.errors.map((e) => e.message).join(", ");
+  }
+  return err.message;
+}
+
 const authSection = document.getElementById("auth-section");
 const newPostSection = document.getElementById("new-post-section");
 const feedSection = document.getElementById("feed-section");
@@ -55,7 +62,7 @@ registerForm.addEventListener("submit", async (e) => {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      alert("Register failed: " + (err.message || res.status));
+      alert("Register failed: " + (formatError(err) || res.status));
       return;
     }
 
@@ -81,7 +88,7 @@ loginForm.addEventListener("submit", async (e) => {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      alert("Login failed: " + (err.message || res.status));
+      alert("Login failed: " + (formatError(err) || res.status));
       return;
     }
 
