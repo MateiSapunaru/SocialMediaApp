@@ -1,164 +1,91 @@
+# Mini Social App
 
-```markdown
-# Social Media App (Node.js + MySQL)
+A social media API and lightweight client built with Node.js, Express, and MySQL — JWT authentication with refresh tokens, role-based access control, and a layered backend architecture (controller → service → repository) built with dependency injection.
 
-A simple yet complete **social media-style application** built from scratch using **Node.js**, **Express**, and **MySQL**.  
-The project demonstrates a modern backend architecture, RESTful API design, authentication with JWTs, and a simple frontend interface for showcasing the app.
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
+![JWT](https://img.shields.io/badge/Auth-JWT%20%2B%20Refresh%20Tokens-black)
+![Tests](https://img.shields.io/badge/tests-29%20passing-brightgreen)
 
----
+![Screenshot of the login and register screens](docs/screenshot.png)
 
-## 🚀 Overview
+## About
 
-This project was designed to demonstrate practical backend development skills and full-stack integration.  
-It includes user authentication, role-based authorization, posts, comments, likes, and secure token-based session handling.
+This is a small social platform — register, log in, post, like, and comment — built to demonstrate backend fundamentals rather than to be a product: secure authentication, authorization, request validation, and a codebase organized the way a production Node service would be, not a single `server.js` file with everything crammed in.
 
-The codebase follows **MVC principles**, uses **Dependency Injection** for structure and testability, and applies **SOLID** design practices for maintainability.
+## Features
 
----
+- **Authentication** — registration and login with bcrypt-hashed passwords, short-lived JWT access tokens, and server-persisted refresh tokens for session renewal and revocation.
+- **Authorization** — role-based access control (`USER` / `ADMIN`); post edit/delete is restricted to the post's owner or an admin, and `GET /auth/users` is admin-only.
+- **Social features** — create posts, like/unlike, comment, and view a chronological feed with like counts.
+- **Request validation** — registration, login, post, and comment endpoints validate and sanitize input (email format, password length, required fields) and return field-level error messages instead of opaque 500s.
+- **Rate limiting** — stricter limits on auth endpoints to slow down brute-force attempts.
+- **XSS-safe rendering** — user-generated content (post titles, content, usernames) is escaped before being inserted into the DOM on the frontend.
 
-## 🧩 Features
-
-### 🔐 Authentication & Authorization
-- Secure user registration and login using **bcrypt** password hashing.
-- **JWT-based authentication** with short-lived access tokens and refresh tokens.
-- Role-based access control (**USER**, **ADMIN**) for protected routes.
-
-### 📰 Social Features
-- Users can create, view, like, and comment on posts.
-- Each post shows like counts and comment threads.
-- Clean separation between public and protected endpoints.
-
-### ⚙️ Backend Architecture
-- Built using **Express** and follows a layered design:
-```
-
-Controller → Service → Repository → MySQL Database
+## Architecture
 
 ```
-- **Dependency Injection container** for decoupling business logic from data access.
-- Centralized **error handling middleware** for cleaner request flow.
-
-### 🧠 Design Patterns & Principles
-- **MVC architecture** (Model–View–Controller)
-- **SOLID principles** for maintainable and extensible code
-- **Asynchronous programming** with `async/await`
-- Separation of concerns across routes, controllers, services, and repositories
-
-### 🧱 Database Schema
-The MySQL schema includes:
-- `users` – user accounts (with hashed passwords)
-- `roles` and `user_roles` – role-based access
-- `posts`, `comments`, `post_likes` – core social features
-- `refresh_tokens` – token persistence for authentication
-
-All relationships are normalized, with **foreign keys**, **indexes**, and **cascade rules** for consistency and performance.
-
----
-
-## 💻 Tech Stack
-
-**Backend:**
-- Node.js  
-- Express  
-- MySQL (via `mysql2` driver)  
-- bcrypt (password hashing)  
-- jsonwebtoken (JWT authentication)  
-- dotenv (environment management)  
-- cors (CORS policy handling)
-
-**Frontend:**
-- Vanilla JavaScript (ES6+)
-- Fetch API for async communication with backend
-- Simple responsive UI built with HTML, CSS, and JS
-
-**Development Tools:**
-- Nodemon for auto-restart during development
-- MySQL Workbench for schema management
-- Postman for API testing
-
----
-
-## 📁 Project Structure
-
+Client (fetch)
+      │
+      ▼
+Express routes  →  validation middleware  →  auth/role middleware
+      │
+      ▼
+Controllers  →  Services (business rules)  →  Repositories (SQL)
+      │
+      ▼
+   MySQL
 ```
 
-backend/
-│
-├── src/
-│   ├── config/          # DB connection and environment variables
-│   ├── controllers/     # Route handlers (controllers)
-│   ├── services/        # Business logic
-│   ├── repositories/    # Database queries
-│   ├── middlewares/     # Auth, role, and error handlers
-│   ├── routes/          # Express routers
-│   ├── di/              # Dependency Injection container
-│   ├── utils/           # JWT, password helpers
-│   ├── app.js           # Express app setup
-│   └── server.js        # Entry point
-│
-├── database/
-│   └── schema.sql       # MySQL database schema
-│
-└── .env                 # Environment configuration
+Dependencies are wired up in a small [DI container](backend/src/di/container.js) rather than each layer constructing its own collaborators, which is what makes the service layer unit-testable without a database (see [Testing](#running-tests)).
 
-frontend/
-│
-├── index.html
-├── style.css
-└── js/
-├── api.js
-├── auth.js
-├── feed.js
-└── main.js
+## Tech Stack
 
-````
+| Layer | Choices |
+|---|---|
+| Runtime | Node.js, Express 5 |
+| Database | MySQL 8 (`mysql2`) |
+| Auth | `bcrypt`, `jsonwebtoken` |
+| Validation | `express-validator` |
+| Testing | Jest, Supertest |
+| Frontend | Vanilla JS (ES modules), no framework |
 
----
+## API Reference
 
-## 🧪 API Testing (Postman)
+| Method | Endpoint | Auth | Description |
+|--------|-----------|------|-------------|
+| `POST` | `/auth/register` | — | Register a new user |
+| `POST` | `/auth/login` | — | Authenticate, receive an access + refresh token |
+| `POST` | `/auth/refresh` | — | Exchange a refresh token for a new access token |
+| `POST` | `/auth/logout` | — | Revoke a refresh token |
+| `GET`  | `/auth/users` | ADMIN | List all users |
+| `GET`  | `/posts` | — | Get the feed |
+| `GET`  | `/posts/:id` | — | Get a post with its comments |
+| `POST` | `/posts` | required | Create a post |
+| `PUT`  | `/posts/:id` | owner/ADMIN | Update a post |
+| `DELETE` | `/posts/:id` | owner/ADMIN | Delete a post |
+| `POST` | `/posts/:id/comments` | required | Add a comment |
+| `POST` | `/posts/:id/like` | required | Toggle a like |
 
-The backend includes full Postman-tested endpoints for:
+## Getting Started
 
-| Method | Endpoint | Description |
-|--------|-----------|-------------|
-| `POST` | `/auth/register` | Register a new user |
-| `POST` | `/auth/login` | Authenticate and receive tokens |
-| `POST` | `/auth/refresh` | Refresh access token |
-| `GET`  | `/posts` | Retrieve feed (public) |
-| `POST` | `/posts` | Create a post (requires token) |
-| `POST` | `/posts/:id/like` | Toggle like (requires token) |
-| `POST` | `/posts/:id/comments` | Add a comment (requires token) |
-| `GET`  | `/auth/users` | Get all users (requires ADMIN role) |
+### Prerequisites
 
-All responses are JSON-formatted and include proper HTTP status codes.
+- Node.js 18+
+- A running MySQL 8 server
 
----
-
-## 🔐 Security Considerations
-- Passwords are **hashed** before storage.
-- JWT secrets are stored in environment variables.
-- Refresh tokens are persisted securely in the database.
-- CORS policy enabled for safe frontend-backend communication.
-
----
-
-## ⚙️ Setup & Usage
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/<yourusername>/social-media-app.git
-cd social-media-app/backend
-````
-
-### 2. Install dependencies
+### 1. Clone and install
 
 ```bash
+git clone https://github.com/MateiSapunaru/SocialMediaApp.git
+cd SocialMediaApp/backend
 npm install
 ```
 
-### 3. Configure `.env`
+### 2. Configure environment
 
-Copy the example file and fill in your own values (this file is gitignored, so your real credentials never get committed):
+Copy the example file and fill in your own values — `.env` is gitignored, so your credentials never get committed:
 
 ```bash
 cp .env.example .env
@@ -175,48 +102,67 @@ ACCESS_TOKEN_EXPIRES=15m
 REFRESH_TOKEN_TTL_DAYS=7
 ```
 
-### 4. Import the database schema
+### 3. Set up the database
 
 ```bash
 mysql -u root -p < database/schema.sql
 ```
 
-### 5. Run the backend
+### 4. Run the backend
 
 ```bash
 npm run dev
 ```
 
-### 6. Serve the frontend
+### 5. Serve the frontend
 
 ```bash
 cd ../frontend
 npx serve .
 ```
 
----
+## Running Tests
 
-## ✅ Running Tests
-
-The backend has a Jest unit test suite covering the auth/post service logic (registration, login, ownership and admin rules, like toggling) and JWT signing, all run against mocked repositories — no database needed:
+The backend has a Jest unit test suite covering the auth/post service logic (registration, login, ownership and admin rules, like toggling) and JWT signing — all run against mocked repositories, so it doesn't need a database:
 
 ```bash
 cd backend
 npm test
 ```
 
----
+## Project Structure
 
-## 🧠 Key Learning Outcomes
+```
+backend/
+├── src/
+│   ├── config/          # DB connection and environment variables
+│   ├── controllers/     # Route handlers
+│   ├── services/        # Business logic (+ unit tests)
+│   ├── repositories/    # SQL queries
+│   ├── middlewares/     # Auth, roles, rate limiting, validation, errors
+│   ├── validators/      # express-validator rule sets (+ tests)
+│   ├── routes/          # Express routers
+│   ├── di/              # Dependency injection container
+│   ├── utils/           # JWT and password helpers (+ tests)
+│   ├── app.js
+│   └── server.js
+├── database/
+│   └── schema.sql
+└── .env.example
 
-This project demonstrates:
+frontend/
+├── index.html
+├── style.css
+└── js/
+    ├── api.js           # fetch wrapper + token refresh
+    ├── auth.js          # register/login forms
+    ├── feed.js          # feed, posting, likes, comments
+    └── main.js
+```
 
-* Real-world backend architecture design.
-* Building a secure authentication system with JWT and refresh tokens.
-* Structuring scalable Node.js applications.
-* Designing normalized relational schemas in MySQL.
-* Integrating backend and frontend through RESTful APIs.
-* Following best practices in modularity, security, and clean code.
+## Notes on Security
 
----
-
+- Passwords are hashed with bcrypt before storage; access tokens are short-lived and refresh tokens are stored server-side so they can be revoked.
+- All mutating endpoints validate input server-side; ownership and role checks live in the service layer, not just the route.
+- User-generated content is HTML-escaped before rendering — the earlier version of this project had a stored-XSS bug in the feed renderer, since fixed.
+- Secrets live in a gitignored `.env`; never in source control.
