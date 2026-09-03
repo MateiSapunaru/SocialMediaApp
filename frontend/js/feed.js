@@ -4,6 +4,12 @@ import { apiRequest } from "./api.js";
 const feedContainer = document.getElementById("feed");
 const newPostForm = document.getElementById("new-post-form");
 
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+
 // Load feed
 async function loadFeed() {
   feedContainer.innerHTML = "Loading...";
@@ -28,10 +34,10 @@ function renderFeed(posts) {
     postEl.className = "card post";
     postEl.innerHTML = `
       <div class="post-header">
-        <span class="post-title">${post.title || "(no title)"}</span>
-        <span>by ${post.username}</span>
+        <span class="post-title">${escapeHtml(post.title) || "(no title)"}</span>
+        <span>by ${escapeHtml(post.username)}</span>
       </div>
-      <div class="post-content">${post.content}</div>
+      <div class="post-content">${escapeHtml(post.content)}</div>
       <div class="post-meta">
         ${new Date(post.created_at).toLocaleString()} ·
         <span data-role="like-count">${post.likeCount ?? 0}</span> likes
@@ -114,7 +120,7 @@ async function loadComments(postId, container) {
   comments.forEach((c) => {
     const el = document.createElement("div");
     el.className = "comment";
-    el.textContent = `${c.username}: ${c.content}`;
+    el.textContent = `${c.username}: ${c.content}`; // textContent, not innerHTML: never trust user-generated content
     container.appendChild(el);
   });
 }
