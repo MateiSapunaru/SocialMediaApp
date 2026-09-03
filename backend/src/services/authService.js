@@ -12,7 +12,9 @@ class AuthService {
   async register({ username, email, password }) {
     const existing = await this.userRepo.findByEmail(email);
     if (existing) {
-      throw new Error('Email already in use');
+      const error = new Error('Email already in use');
+      error.statusCode = 409;
+      throw error;
     }
 
     const passwordHash = await this.passwordUtil.hash(password);
@@ -54,6 +56,10 @@ class AuthService {
 
   async logout(refreshToken) {
     await this.refreshRepo.delete(refreshToken);
+  }
+
+  async listUsers() {
+    return this.userRepo.findAll();
   }
 }
 

@@ -6,6 +6,7 @@ class AuthController {
     this.login = this.login.bind(this);
     this.refresh = this.refresh.bind(this);
     this.logout = this.logout.bind(this);
+    this.listUsers = this.listUsers.bind(this);
   }
 
   async register(req, res, next) {
@@ -47,6 +48,15 @@ class AuthController {
         await this.authService.logout(refreshToken);
       }
       res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async listUsers(req, res, next) {
+    try {
+      const users = await this.authService.listUsers();
+      res.json(users);
     } catch (err) {
       next(err);
     }

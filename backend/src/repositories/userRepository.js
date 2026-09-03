@@ -20,6 +20,13 @@ class UserRepository {
     );
     return { id: result.insertId, username, email };
   }
+
+  async findAll() {
+    const [rows] = await this.db.execute(
+      'SELECT id, username, email, is_active, created_at FROM users ORDER BY created_at DESC'
+    );
+    return rows;
+  }
 }
 
 module.exports = UserRepository;
